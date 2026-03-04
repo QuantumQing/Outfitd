@@ -6,6 +6,10 @@ Inspired by — and intended to replace — services like Trunk Club and Stitch 
 
 ---
 
+<img width="2752" height="1536" alt="outfitd" src="https://github.com/user-attachments/assets/bc343e59-8010-46ab-a58b-297835fd297a" />
+
+---
+
 ## Features
 
 ### Core Styling Pipeline
