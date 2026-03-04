@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Style Profile</h1>
+    <p>Tell us about your style preferences — the more detail, the better your trunks will be.</p>
+</div>
+
+<form method="post" action="/profile" enctype="multipart/form-data">
+
+    <!-- Physical -->
+    <div class="form-section fade-in">
+        <h3>Physical Details</h3>
+        <div class="form-grid">
+            <label>
+                Height
+                <input type="text" name="height" value="{{ profile.height }}" placeholder="e.g., 5'11&quot;">
+            </label>
+            <label>
+                Skin Tone
+                <input type="text" name="skin_color" value="{{ profile.skin_color }}"
+                    placeholder="e.g., medium-dark, fair">
+            </label>
+            <label>
+                Photo (optional)
+                <input type="file" name="photo" accept="image/*">
+            </label>
+        </div>
+    </div>
+
+    <!-- Measurements -->
+    <div class="form-section fade-in">
+        <h3>Measurements</h3>
+        <div class="form-grid">
+            <label>
+                Chest
+                <input type="text" name="chest" value="{{ profile.measurements.chest }}" placeholder='e.g., 40"'>
+            </label>
+            <label>
+                Waist
+                <input type="text" name="waist" value="{{ profile.measurements.waist }}" placeholder='e.g., 32"'>
+            </label>
+            <label>
+                Inseam
+                <input type="text" name="inseam" value="{{ profile.measurements.inseam }}" placeholder='e.g., 32"'>
+            </label>
+            <label>
+                Neck
+                <input type="text" name="neck" value="{{ profile.measurements.neck }}" placeholder='e.g., 16"'>
+            </label>
+            <label>
+                Shoulder Width
+                <input type="text" name="shoulder_width" value="{{ profile.measurements.shoulder_width }}"
+                    placeholder='e.g., 18"'>
+            </label>
+            <label>
+                Shoe Size
+                <input type="text" name="shoe_size" value="{{ profile.measurements.shoe_size }}"
+                    placeholder="e.g., 10.5">
+            </label>
+        </div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="form-section fade-in">
+        <h3>Sizes</h3>
+        <div class="form-grid">
+            <label>
+                Shirt Size
+                <input type="text" name="shirt_size" value="{{ profile.sizes.shirt }}" placeholder="e.g., M, L">
+            </label>
+            <label>
+                Pants Size
+                <input type="text" name="pants_size" value="{{ profile.sizes.pants }}" placeholder="e.g., 32x32">
+            </label>
+            <label>
+                Shoe Size
+                <input type="text" name="shoe_size_val" value="{{ profile.sizes.shoe }}" placeholder="e.g., 10.5">
+            </label>
+        </div>
+    </div>
+
+    <!-- Style Preferences -->
+    <div class="form-section fade-in">
+        <h3>Style Preferences</h3>
+        <div class="form-grid">
+            <label>
+                Fit Preference (tops)
+                <select name="fit_preference">
+                    <option value="slim" {{ 'selected' if profile.fit_preference=='slim' }}>Slim</option>
+                    <option value="regular" {{ 'selected' if profile.fit_preference=='regular' }}>Regular</option>
+                    <option value="relaxed" {{ 'selected' if profile.fit_preference=='relaxed' }}>Relaxed</option>
+                    <option value="athletic" {{ 'selected' if profile.fit_preference=='athletic' }}>Athletic</option>
+                </select>
+            </label>
+            <label>
+                Bottom Fit
+                <select name="bottom_fit">
+                    <option value="slim" {{ 'selected' if profile.bottom_fit=='slim' }}>Slim</option>
+                    <option value="regular" {{ 'selected' if profile.bottom_fit=='regular' }}>Regular</option>
+                    <option value="relaxed" {{ 'selected' if profile.bottom_fit=='relaxed' }}>Relaxed</option>
+                </select>
+            </label>
+            <label>
+                Bottom Rise
+                <select name="bottom_rise">
+                    <option value="low" {{ 'selected' if profile.bottom_rise=='low' }}>Low Rise</option>
+                    <option value="mid" {{ 'selected' if profile.bottom_rise=='mid' }}>Mid Rise</option>
+                    <option value="high" {{ 'selected' if profile.bottom_rise=='high' }}>High Rise</option>
+                </select>
+            </label>
+            <label>
+                Occasion / Vibe
+                <select name="occasion">
+                    <option value="casual" {{ 'selected' if profile.occasion=='casual' }}>Casual</option>
+                    <option value="smart casual" {{ 'selected' if profile.occasion=='smart casual' }}>Smart Casual
+                    </option>
+                    <option value="business casual" {{ 'selected' if profile.occasion=='business casual' }}>Business
+                        Casual</option>
+                    <option value="streetwear" {{ 'selected' if profile.occasion=='streetwear' }}>Streetwear</option>
+                    <option value="athleisure" {{ 'selected' if profile.occasion=='athleisure' }}>Athleisure</option>
+                </select>
+            </label>
+        </div>
+
+        <label>
+            Preferred Brands (comma separated)
+            <input type="text" name="brands_liked" value="{{ profile.brands_liked | join(', ') }}"
+                placeholder="e.g., Levi's, Bonobos, J.Crew">
+        </label>
+
+        <label>
+            Preferred Colors (comma separated)
+            <input type="text" name="colors_preferred" value="{{ profile.colors_preferred | join(', ') }}"
+                placeholder="e.g., navy, olive, white, charcoal">
+        </label>
+
+    </div>
+
+    <!-- Per-Category Budget -->
+    <div class="form-section fade-in">
+        <h3>Per-Category Budget <span
+                style="font-size:0.8em; color:var(--trunk-text-secondary); font-weight: 400; font-family: var(--font-body); text-transform: none; letter-spacing: 0;">(0
+                = use global
+                budget)</span></h3>
+        <div class="form-grid">
+            <label>
+                Tops ($)
+                <input type="number" name="budget_tops" value="{{ profile.budget_per_category.tops }}" min="0" step="5">
+            </label>
+            <label>
+                Bottoms ($)
+                <input type="number" name="budget_bottoms" value="{{ profile.budget_per_category.bottoms }}" min="0"
+                    step="5">
+            </label>
+            <label>
+                Outerwear ($)
+                <input type="number" name="budget_outerwear" value="{{ profile.budget_per_category.outerwear }}" min="0"
+                    step="5">
+            </label>
+            <label>
+                Shoes ($)
+                <input type="number" name="budget_shoes" value="{{ profile.budget_per_category.shoes }}" min="0"
+                    step="5">
+            </label>
+        </div>
+
+        <label style="margin-top: 1rem;">
+            Dislikes / Dealbreakers (comma separated)
+            <input type="text" name="dislikes" value="{{ profile.dislikes | join(', ') }}"
+                placeholder="e.g., Long sleeves, Vests, Bright yellow">
+        </label>
+
+        <label style="margin-top: 1rem;">
+            Style Notes (anything else we should know)
+            <textarea name="style_notes" rows="3"
+                placeholder="e.g., No graphic tees, prefer earth tones, work from home most days...">{{ profile.style_notes }}</textarea>
+        </label>
+    </div>
+
+    <div style="text-align: center; padding: 1rem 0 2rem;">
+        <button type="submit" class="btn-generate" id="save-profile-btn">Save Profile</button>
+    </div>
+</form>
+{% endblock %}

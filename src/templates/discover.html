@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Discover Trends{% endblock %}
+
+{% block content %}
+<div class="discover-container">
+    <div class="discover-header">
+        <h1>Discover Trends</h1>
+        <p>Rate trending items to fine-tune your personalized style profile.</p>
+    </div>
+
+    <div class="card-wrapper-outer">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Finding new trends...</p>
+        </div>
+
+        <div id="current-card" class="discover-card hidden">
+            <div class="card-image-container">
+                <img id="item-image" src="" alt="Item Image" onerror="this.src='/static/placeholder.jpg'">
+                <div class="card-overlay">
+                    <span id="item-brand" class="brand-tag">Brand</span>
+                    <span id="item-price" class="price-tag">$0.00</span>
+                </div>
+            </div>
+            <div class="card-info">
+                <h2 id="item-name">Product Name</h2>
+                <a id="item-link" href="#" target="_blank" class="details-link">View Details <i
+                        class="fas fa-external-link-alt"></i></a>
+            </div>
+        </div>
+
+        <div id="empty-state" class="empty-state hidden">
+            <i class="fas fa-check-circle icon"></i>
+            <h3>You're all caught up!</h3>
+            <p>Check back later for more trends.</p>
+            <button onclick="window.location.reload()" class="btn-generate">Refresh Feed</button>
+        </div>
+    </div>
+
+    <div class="action-buttons hidden" id="action-buttons">
+        <button id="btn-dislike" class="action-btn dislike" onclick="handleVote('dislike')">
+            <i class="fas fa-times"></i> Not for me
+        </button>
+        <button id="btn-like" class="action-btn like" onclick="handleVote('like')">
+            <i class="fas fa-heart"></i> Love it
+        </button>
+    </div>
+</div>
+
+<style>
+    .discover-container {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: calc(100vh - 200px);
+    }
+
+    .discover-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .card-wrapper-outer {
+        width: 100%;
+        position: relative;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .discover-card {
+        width: 100%;
+        background: var(--trunk-surface-card);
+        border-radius: var(--trunk-radius-lg);
+        overflow: hidden;
+        border: 1px solid rgba(200, 169, 126, 0.1);
+        box-shadow: var(--trunk-shadow-lg);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .card-image-container {
+        width: 100%;
+        height: 400px;
+        position: relative;
+        background: #fff;
+    }
+
+    .card-image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 20px;
+    }
+
+    .card-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .brand-tag {
+        background: var(--trunk-accent);
+        color: #1a1a2e;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .price-tag {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.2rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-info {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .card-info h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+        color: var(--trunk-text-primary);
+    }
+
+    .details-link {
+        color: var(--trunk-text-secondary);
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .details-link:hover {
+        color: var(--trunk-accent);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 2rem;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 1rem;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .action-btn.dislike {
+        background: var(--trunk-surface-elevated);
+        color: var(--trunk-wildcard);
+        border: 2px solid var(--trunk-wildcard);
+    }
+
+    .action-btn.dislike:hover {
+        background: var(--trunk-wildcard);
+        color: #fff;
+        transform: scale(1.05);
+    }
+
+    .action-btn.like {
+        background: var(--trunk-gradient-accent);
+        color: #1a1a2e;
+        border: 2px solid transparent;
+    }
+
+    .action-btn.like:hover {
+        filter: brightness(1.1);
+        transform: scale(1.05);
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* Swipe animations */
+    .swipe-left {
+        transform: translateX(-100%) rotate(-10deg);
+        opacity: 0;
+    }
+
+    .swipe-right {
+        transform: translateX(100%) rotate(10deg);
+        opacity: 0;
+    }
+</style>
+
+<script>
+    let items = [];
+    let currentIndex = 0;
+    let isLoading = false;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('nav-discover').classList.add('active');
+        fetchFeed();
+    });
+
+    async function fetchFeed() {
+        if (isLoading) return;
+        isLoading = true;
+
+        const loadingEl = document.getElementById('loading');
+        loadingEl.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/discover/feed');
+            if (!response.ok) throw new Error('Failed to fetch feed');
+
+            const newItems = await response.json();
+            if (newItems.length > 0) {
+                items = items.concat(newItems);
+                if (currentIndex >= items.length - newItems.length) {
+                    renderCard();
+                }
+            } else {
+                if (items.length === 0) {
+                    showEmptyState();
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching feed:', error);
+            if (items.length === 0) {
+                document.querySelector('.discover-header p').textContent = "Could not load trends. Please try again.";
+            }
+        } finally {
+            isLoading = false;
+            loadingEl.classList.add('hidden');
+        }
+    }
+
+    function renderCard() {
+        const cardEl = document.getElementById('current-card');
+        const actionsEl = document.getElementById('action-buttons');
+        const emptyEl = document.getElementById('empty-state');
+
+        if (currentIndex >= items.length) {
+            cardEl.classList.add('hidden');
+            actionsEl.classList.add('hidden');
+
+            if (!isLoading) {
+                // Try to fetch more if we ran out
+                fetchFeed().then(() => {
+                    if (currentIndex >= items.length) showEmptyState();
+                });
+            }
+            return;
+        }
+
+        const item = items[currentIndex];
+
+        // Reset animation classes
+        cardEl.className = 'discover-card fade-in';
+
+        // Populate data
+        document.getElementById('item-image').src = item.image_url || '/static/placeholder.jpg';
+        document.getElementById('item-brand').textContent = item.brand || 'Unknown Brand';
+        document.getElementById('item-name').textContent = item.product_name;
+        document.getElementById('item-price').textContent = item.price ? `$${item.price.toFixed(2)}` : '';
+        document.getElementById('item-link').href = item.purchase_url || '#';
+
+        cardEl.classList.remove('hidden');
+        actionsEl.classList.remove('hidden');
+        emptyEl.classList.add('hidden');
+    }
+
+    async function handleVote(decision) {
+        if (currentIndex >= items.length) return;
+
+        const item = items[currentIndex];
+        const cardEl = document.getElementById('current-card');
+
+        // Animate card
+        if (decision === 'like') {
+            cardEl.classList.add('swipe-right');
+        } else {
+            cardEl.classList.add('swipe-left');
+        }
+
+        // Send feedback
+        try {
+            await fetch(`/discover/feedback/${item.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision: decision })
+            });
+        } catch (e) {
+            console.error('Feedback failed:', e);
+        }
+
+        // Move to next after animation
+        setTimeout(() => {
+            currentIndex++;
+            renderCard();
+
+            // Prefetch if running low
+            if (items.length - currentIndex < 3) {
+                fetchFeed();
+            }
+        }, 300);
+    }
+
+    function showEmptyState() {
+        document.getElementById('current-card').classList.add('hidden');
+        document.getElementById('action-buttons').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env
+
+# Personal user persona (contains private measurements/preferences)
+user_persona.md
+
+# Database
+*.db
+*.sqlite3
+
+# Uploads
+src/static/uploads/*
+!src/static/uploads/.gitkeep
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts / archives
+update.tar
+update.tar.gz
+*.tar
+*.tar.gz
+logs.txt
+repair.log
+repro_crash.py
+
+# Test
+.pytest_cache/
+htmlcov/
+.coverage

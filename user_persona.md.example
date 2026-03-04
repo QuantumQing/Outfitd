@@ -1,0 +1,70 @@
+# Outfitd User Persona Template
+
+Copy this file to `user_persona.md` and fill it in with your own details.
+This file is the single most important input to the system — the more specific you are,
+the better Outfitd's recommendations will be.
+
+`user_persona.md` is gitignored so your personal measurements stay local.
+
+---
+
+## 1. Biometrics & Measurements
+
+*   **Height:** 5'11"
+*   **Weight:** 175 lbs
+*   **Chest:** 40"
+*   **Natural Waist (Belly Button):** 32"
+*   **Hip/Lower Waist (Belt Line):** 34"
+*   **Thighs:** 21"
+*   **Inseam:** 32"
+
+## 2. Body Morphology & Fit Logic
+
+**Top Half:**
+*   *The Problem:* [Describe your specific fit challenge — e.g., "broad shoulders make the chest too tight in slim fits."]
+*   *The Solution:* [What works — e.g., "Athletic fit or relaxed fit with a tapered waist."]
+*   *Sizing:* **Medium (M)** across most brands.
+
+**Bottom Half:**
+*   *The Problem:* [Describe — e.g., "Slim jeans cut off circulation at the quads."]
+*   *The Solution:* [e.g., "Athletic taper or high-stretch elastane blends."]
+*   *Sizing:* **32x32**
+
+## 3. Lifestyle & Use Case Context
+
+*   **Location:** [Your city/region and climate — e.g., "Chicago, IL — cold winters, hot humid summers."]
+*   **Work:** [e.g., "Hybrid office — 3 days in office, 2 WFH."]
+*   **Wear Frequency:** [e.g., "'Going out' clothes worn 2-3x per week. Prioritize versatility over trend."]
+*   **Budget:** Tops: ~$50–$80. Bottoms: ~$80–$130.
+
+## 4. Style Preferences
+
+*   **Preferred Tops:** [e.g., "T-shirts, henleys, and casual button-downs. No graphic tees."]
+*   **Preferred Bottoms:** [e.g., "Dark denim, slim chinos, joggers for WFH."]
+*   **Vibe:** [e.g., "Smart-casual, elevated basics, minimal/clean aesthetic."]
+
+## 5. Color Palette
+
+*   **Neutrals:** [e.g., "Black, White, Heather Grey, Charcoal."]
+*   **Earth Tones:** [e.g., "Olive, Tan, Rust."]
+*   **Accent:** [e.g., "Burgundy, Forest Green."]
+
+## 6. Approved Brand Roster & Sizing
+
+| Brand | Category | Preferred Model/Cut | Size | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **[Brand]** | Tees | [Model name] | M | [Why it works for your body type] |
+| **[Brand]** | Jeans | [Model name] | 32x32 | [e.g., "High stretch — accommodates athletic build."] |
+| **[Brand]** | Chinos | [Model name] | 32x32 | [Notes] |
+
+## 7. Current Core Wardrobe Inventory
+
+*   **Bottoms:** [List what you already own so Outfitd avoids duplicating it]
+*   **Tops:** [e.g., "Navy polo (Brand X), White tee (Brand Y), Olive button-down (Brand Z)."]
+
+## 8. Generation Rules for Outfitd Agents
+
+1.  **[Rule 1]:** [e.g., "Never recommend rigid non-stretch pants — always require elastane or an athletic cut."]
+2.  **[Rule 2]:** [e.g., "No graphic tees or logo-heavy items."]
+3.  **[Rule 3]:** [e.g., "Color contrast rule: don't pair a dark top with dark bottoms unless one is a neutral."]
+4.  **[Rule 4]:** [e.g., "Keep tops under $80 and bottoms under $130. Prefer premium brands on sale over fast fashion at retail."]

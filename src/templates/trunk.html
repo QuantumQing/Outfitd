@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ page_title }}</h1>
+    {% if trunk %}
+    <p>{{ trunk.season | capitalize }} collection — {{ trunk.items | length }} items across {{ outfits | length }}
+        outfits</p>
+    <button class="btn-generate-new" id="generate-trunk-btn" onclick="generateTrunk()">
+        🔄 Generate New Trunk
+    </button>
+    {% else %}
+    <p>Your personalized clothing recommendations</p>
+    {% endif %}
+</div>
+
+
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(12px);
+    }
+
+    .modal-content {
+        background-color: var(--trunk-bg-secondary);
+        margin: 10vh auto;
+        padding: 3rem 2.5rem;
+        border: 1px solid var(--trunk-border);
+        width: 90%;
+        max-width: 500px;
+        border-radius: var(--trunk-radius-lg);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), var(--trunk-shadow-glow);
+        position: relative;
+        color: var(--trunk-text-primary);
+        animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDown {
+        from {
+            transform: translateY(-40px) scale(0.95);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    }
+
+    .close-modal {
+        color: var(--trunk-text-secondary);
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 32px;
+        font-weight: 300;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.3s ease;
+    }
+
+    .close-modal:hover {
+        color: var(--trunk-accent);
+    }
+
+    .reason-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 1.5rem 0 2rem;
+    }
+
+    .reason-btn {
+        background: var(--trunk-bg-tertiary);
+        border: 1px solid var(--trunk-border);
+        color: var(--trunk-text-secondary);
+        padding: 1rem 0.5rem;
+        border-radius: var(--trunk-radius-sm);
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .reason-btn:hover {
+        border-color: rgba(226, 192, 141, 0.3);
+        color: var(--trunk-text-primary);
+        transform: translateY(-2px);
+    }
+
+    .reason-btn.selected {
+        background: rgba(255, 143, 143, 0.1);
+        border-color: rgba(255, 143, 143, 0.4);
+        color: var(--trunk-wildcard);
+    }
+
+    /* Tighter actions layout for small cards */
+    .item-actions {
+        padding: 1rem 1.5rem 1.5rem !important;
+        gap: 0.75rem !important;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 0.5rem !important;
+    }
+
+    .btn-dislike {
+        flex: 0 0 52px !important;
+        min-width: 52px;
+        font-size: 1.2rem !important;
+        padding: 0 !important;
+        background: transparent;
+        color: var(--trunk-text-secondary);
+        border: 1px solid var(--trunk-text-tertiary);
+        margin-left: auto !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--trunk-radius-sm);
+    }
+
+    .btn-dislike:hover {
+        background: rgba(255, 143, 143, 0.1);
+        border-color: rgba(255, 143, 143, 0.4);
+        color: var(--trunk-wildcard);
+    }
+</style>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeFeedbackModal()">&times;</span>
+        <h3 style="margin-bottom: 0.5rem; color: var(--trunk-accent);">👎 Thumbs Down</h3>
+        <p style="color: var(--trunk-text-secondary); margin-bottom: 1rem;">Help your AI stylist learn what to avoid.
+        </p>
+
+        <input type="hidden" id="feedback-item-id">
+        <input type="hidden" id="feedback-reason">
+
+        <label style="font-size: 0.8rem; text-transform: uppercase; color: var(--trunk-text-secondary);">Reason</label>
+        <div class="reason-grid">
+            <button class="reason-btn" onclick="selectReason(this, 'Color')">Color</button>
+            <button class="reason-btn" onclick="selectReason(this, 'Style')">Style</button>
+            <button class="reason-btn" onclick="selectReason(this, 'Article')">Article</button>
+        </div>
+
+        <label for="feedback-text"
+            style="font-size: 0.8rem; text-transform: uppercase; color: var(--trunk-text-secondary); display: block; margin-bottom: 0.5rem;">Additional
+            Context
+            (Optional)</label>
+        <textarea id="feedback-text" rows="3"
+            style="width: 100%; background: var(--trunk-bg-tertiary); border: 1px solid var(--trunk-border); color: var(--trunk-text-primary); padding: 1rem; border-radius: 8px; font-family: var(--font-body);"
+            placeholder="e.g. Too bright, I don't wear vests..."></textarea>
+
+        <button class="btn btn-purchase" onclick="submitFeedback()"
+            style="margin-top: 2rem; width: 100%; font-size: 1rem;">Submit Feedback</button>
+    </div>
+</div>
+
+<!-- Loading State (hidden by default) -->
+<div id="generating-state" class="generating" style="display: none;">
+    <div class="spinner"></div>
+    <h3>Curating your trunk...</h3>
+    <p style="color: var(--trunk-text-secondary);">Our AI stylist is searching for products and assembling outfits. This
+        may take a minute.</p>
+</div>
+
+{% if trunk %}
+
+<!-- Stylist Brief -->
+{% if trunk.stylist_brief %}
+<div class="stylist-brief fade-in">
+    <p>{{ trunk.stylist_brief }}</p>
+</div>
+{% endif %}
+
+<!-- Outfits -->
+{% for group_num, outfit in outfits.items() %}
+<div class="outfit-section fade-in" id="outfit-group-{{ group_num }}">
+    <div class="outfit-title">
+        <span class="outfit-number">{{ loop.index }}</span>
+        {% if outfit['is_wildcard'] %}
+        <span>Something New</span>
+        <span class="wildcard-badge">Wildcard</span>
+        {% else %}
+        <span>Outfit {{ loop.index }}</span>
+        {% endif %}
+
+        <!-- Reroll Button -->
+        <button class="btn btn-reroll" onclick="rerollOutfit({{ trunk.id }}, {{ group_num }})"
+            style="margin-left: auto; background: rgba(200,169,126,0.1); border: 1px solid var(--trunk-accent); color: var(--trunk-accent); font-size: 0.9rem; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;">
+            🎲 Re-roll Outfit
+        </button>
+    </div>
+
+    {% if outfit.get('outfit_description') %}
+    <div class="outfit-description"
+        style="margin-bottom: 1rem; color: var(--trunk-text-secondary); font-style: italic; max-width: 800px; padding: 0.5rem 1rem; border-left: 3px solid var(--trunk-accent); background: rgba(255,255,255,0.02); border-radius: 0 4px 4px 0;">
+        {{ outfit['outfit_description'] }}
+    </div>
+    {% endif %}
+
+    <div class="outfit-grid">
+        {% for item in outfit['items'] %}
+        <div class="item-card {{ 'wildcard' if item.is_wildcard }}" id="item-{{ item.id }}">
+
+            <!-- Product Image -->
+            {% if item.image_url %}
+            <div class="item-image-container">
+                <img src="{{ item.image_url }}" alt="{{ item.product_name }}" class="item-image" loading="lazy"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="item-image-placeholder" style="display:none;">
+                    {% if item.category == 'top' %}👕
+                    {% elif item.category == 'bottom' %}👖
+                    {% elif item.category == 'shoes' %}👟
+                    {% elif item.category == 'outerwear' %}🧥
+                    {% elif item.category == 'accessory' %}⌚
+                    {% else %}👔
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="item-image-placeholder">
+                {% if item.category == 'top' %}👕
+                {% elif item.category == 'bottom' %}👖
+                {% elif item.category == 'shoes' %}👟
+                {% elif item.category == 'outerwear' %}🧥
+                {% elif item.category == 'accessory' %}⌚
+                {% else %}👔
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="item-body">
+                <div class="item-brand">{{ item.brand }}</div>
+                <div class="item-name">{{ item.product_name }}</div>
+                <div class="item-meta">
+                    <span class="item-price">${{ "%.2f" | format(item.price) }}</span>
+                    <span class="item-retailer" style="display: inline-flex; align-items: center; gap: 4px;">
+                        {{ item.retailer }}
+                        {% if item.return_policy_summary %}
+                        <span title="{{ item.return_policy_summary }}"
+                            style="cursor: help; color: var(--trunk-accent); font-size: 0.9rem;">📦</span>
+                        {% else %}
+                        <span title="Return Policy Days: {{ item.return_policy_days }}"
+                            style="cursor: help; color: var(--trunk-text-secondary); font-size: 0.9rem;">ℹ️</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="item-tags">
+                    <span class="item-tag">{{ item.category }}</span>
+                    {% if item.color %}<span class="item-tag">{{ item.color }}</span>{% endif %}
+                    {% if item.size %}<span class="item-tag">{{ item.size }}</span>{% endif %}
+                </div>
+                {% if item.stylist_note %}
+                <div class="item-note">{{ item.stylist_note }}</div>
+                {% endif %}
+
+                <!-- View Details Link -->
+                {% if item.purchase_url %}
+                <a href="{{ item.purchase_url }}" target="_blank" rel="noopener" class="btn-view-details">
+                    🔗 View Product Details
+                </a>
+                {% endif %}
+
+                <!-- Lock for Reroll Button -->
+                {% if not item.decision %}
+                <button class="btn btn-lock" onclick="toggleLock(this, {{ item.id }})" data-locked="false"
+                    style="margin-top: 0.5rem; width: 100%; background: transparent; color: var(--trunk-text-secondary); border: 1px dashed rgba(200,169,126,0.3); padding: 0.4rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                    🔓 Lock Item
+                </button>
+                {% endif %}
+
+                <!-- Decision Badge (if already decided) -->
+                {% if item.decision %}
+                <div style="margin-top: 0.5rem;">
+                    {% if item.decision == 'purchase' %}
+                    {% if item.returned %}
+                    <span class="decision-badge decision-returned">↩ Returned</span>
+                    {% else %}
+                    <span class="decision-badge decision-purchased">✓ Purchased</span>
+                    {% endif %}
+                    {% elif item.decision == 'skip' %}
+                    <span class="decision-badge decision-skipped">✗ Skipped</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            {% if not item.decision %}
+            <div class="item-actions">
+                <button class="btn btn-purchase" onclick="recordDecision({{ item.id }}, 'purchase')">
+                    🛒 Purchase
+                </button>
+                <button class="btn btn-skip" onclick="recordDecision({{ item.id }}, 'skip')">
+                    ✗ Skip
+                </button>
+                <button class="btn btn-dislike" onclick="openFeedbackModal({{ item.id }})"
+                    title="Dislike / Tune Stylist">
+                    👎
+                </button>
+            </div>
+            {% elif item.decision == 'purchase' and not item.returned %}
+            <div class="item-actions">
+                <button class="btn btn-undo" onclick="undoDecision({{ item.id }})">
+                    ↶ Undo
+                </button>
+                <button class="btn btn-return" onclick="recordReturn({{ item.id }})">
+                    ↩ Return
+                </button>
+            </div>
+            {% elif item.decision == 'skip' %}
+            <div class="item-actions">
+                <button class="btn btn-undo" onclick="undoDecision({{ item.id }})">
+                    ↶ Undo
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+{% endfor %}
+
+{% else %}
+
+<!-- Empty State -->
+<div class="empty-state fade-in">
+    <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            style="filter: drop-shadow(0 0 12px rgba(226, 192, 141, 0.4));">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            <path d="M12 11h.01"></path>
+        </svg>
+    </div>
+    <h2>No Trunk Yet</h2>
+    <p>Generate your first trunk to receive AI-curated outfit recommendations professionally tailored to your style.</p>
+    <button class="btn-generate" id="generate-trunk-btn" onclick="generateTrunk()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21 16-4 4-4-4" />
+            <path d="M17 20V4" />
+            <path d="m3 8 4-4 4 4" />
+            <path d="M7 4v16" />
+        </svg>
+        Generate My Trunk
+    </button>
+</div>
+
+{% endif %}
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function recordDecision(itemId, decision) {
+        try {
+            const res = await fetch(`/trunk/${itemId}/decide`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision })
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                alert('Failed to record decision');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error');
+        }
+    }
+
+    async function undoDecision(itemId) {
+        try {
+            const res = await fetch(`/trunk/${itemId}/undo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert('Failed to undo: ' + (err.detail || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error');
+        }
+    }
+
+    async function recordReturn(itemId) {
+        if (!confirm('Mark this item as returned?')) return;
+        try {
+            const res = await fetch(`/trunk/${itemId}/return`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ returned: true })
+            });
+            if (res.ok) {
+                location.reload();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function generateTrunk() {
+        const btn = document.getElementById('generate-trunk-btn');
+        const genState = document.getElementById('generating-state');
+
+        if (btn) btn.style.display = 'none';
+        if (genState) {
+            genState.style.display = 'block';
+            genState.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        try {
+            const res = await fetch('/trunk/generate', { method: 'POST' });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert('Generation failed: ' + (err.detail || 'Unknown error'));
+                if (btn) btn.style.display = '';
+                if (genState) genState.style.display = 'none';
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error during generation');
+            if (btn) btn.style.display = '';
+            if (genState) genState.style.display = 'none';
+        }
+    }
+
+    // Feedback Modal Logic
+    let selectedReason = '';
+
+    function openFeedbackModal(itemId) {
+        document.getElementById('feedback-modal').style.display = 'block';
+        document.getElementById('feedback-item-id').value = itemId;
+        selectedReason = '';
+        // Clear previous selection
+        document.querySelectorAll('.reason-btn').forEach(btn => btn.classList.remove('selected'));
+        document.getElementById('feedback-text').value = '';
+    }
+
+    function closeFeedbackModal() {
+        document.getElementById('feedback-modal').style.display = 'none';
+    }
+
+    function selectReason(btn, reason) {
+        document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedReason = reason;
+    }
+
+    async function submitFeedback() {
+        const itemId = document.getElementById('feedback-item-id').value;
+        const text = document.getElementById('feedback-text').value;
+
+        if (!selectedReason) {
+            alert('Please select a reason (Color, Style, or Article)');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/trunk/${itemId}/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: selectedReason, text: text })
+            });
+
+            if (res.ok) {
+                location.reload();
+            } else {
+                alert('Failed to submit feedback');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error');
+        }
+    }
+</script>
+<script>
+    function toggleLock(btn, itemId) {
+        const isLocked = btn.getAttribute("data-locked") === "true";
+        if (isLocked) {
+            btn.setAttribute("data-locked", "false");
+            btn.innerHTML = "🔓 Lock Item";
+            btn.style.background = "transparent";
+            btn.style.color = "var(--trunk-text-secondary)";
+            btn.style.border = "1px dashed rgba(200,169,126,0.3)";
+            btn.classList.remove("item-locked");
+        } else {
+            btn.setAttribute("data-locked", "true");
+            btn.innerHTML = "🔒 Locked";
+            btn.style.background = "rgba(200,169,126,0.15)";
+            btn.style.color = "var(--trunk-accent)";
+            btn.style.border = "1px solid var(--trunk-accent)";
+            btn.classList.add("item-locked");
+        }
+    }
+
+    async function rerollOutfit(trunkId, groupNum) {
+        // Collect locked items
+        const lockedIds = [];
+        document.querySelectorAll(`#outfit-group-${groupNum} .item-locked`).forEach(btn => {
+            const match = btn.getAttribute("onclick").match(/\d+/g);
+            if (match && match.length > 0) {
+                lockedIds.push(parseInt(match[match.length - 1]));
+            }
+        });
+
+        if (lockedIds.length === 0) {
+            alert("Please lock at least one outfit piece to reroll the rest.");
+            return;
+        }
+
+        const genState = document.getElementById('generating-state');
+        if (genState) {
+            genState.style.display = 'block';
+            genState.innerHTML = '<div class="spinner"></div><h3>Curating new matches...</h3><p style="color: var(--trunk-text-secondary);">Rerolling unlocked items. This takes about 30 seconds.</p>';
+            genState.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        try {
+            const res = await fetch(`/trunk/${trunkId}/reroll/${groupNum}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ locked_item_ids: lockedIds })
+            });
+
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert('Reroll failed: ' + (err.detail || 'Unknown error'));
+                if (genState) genState.style.display = 'none';
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error during reroll');
+            if (genState) genState.style.display = 'none';
+        }
+    }
+</script>
+<script>
+    // Close modal if clicked outside
+    window.onclick = function (event) {
+        const modal = document.getElementById('feedback-modal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

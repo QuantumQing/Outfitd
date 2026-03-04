@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Trunk History</h1>
+    <p>Browse your past trunks and see how your style has evolved.</p>
+</div>
+
+{% if trunks %}
+{% for trunk in trunks %}
+<a href="/trunk/{{ trunk.id }}" style="text-decoration: none; color: inherit;">
+    <div class="history-card fade-in">
+        <div class="history-info">
+            <h3>Trunk #{{ trunk.id }} — {{ trunk.season | capitalize }}</h3>
+            <div class="history-meta">Generated {{ trunk.generated_at }}</div>
+        </div>
+        <span class="status-badge status-{{ trunk.status }}">{{ trunk.status }}</span>
+    </div>
+</a>
+{% endfor %}
+{% else %}
+<div class="empty-state fade-in">
+    <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            style="filter: drop-shadow(0 0 12px rgba(226, 192, 141, 0.4));">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+    </div>
+    <h2>No History Yet</h2>
+    <p>Once you acquire your first premium trunk, your curated timeline will appear here.</p>
+    <a href="/trunk" class="btn-generate" style="text-decoration: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21 16-4 4-4-4" />
+            <path d="M17 20V4" />
+            <path d="m3 8 4-4 4 4" />
+            <path d="M7 4v16" />
+        </svg>
+        Go to Trunk
+    </a>
+</div>
+{% endif %}
+{% endblock %}
